@@ -1,0 +1,12 @@
+<svg width="1200" height="628" viewBox="0 0 1200 628" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="628" fill="#0F172A"/>
+  <circle cx="1040" cy="-40" r="260" fill="#22C55E" fill-opacity="0.25"/>
+  <rect x="72" y="72" width="560" height="484" rx="24" fill="#111827" stroke="#1F2937" stroke-width="2"/>
+  <text x="104" y="176" fill="#F8FAFC" font-size="56" font-family="Arial" font-weight="700">Boost Conversion</text>
+  <text x="104" y="248" fill="#22C55E" font-size="56" font-family="Arial" font-weight="700">by 28% in 14 Days</text>
+  <text x="104" y="320" fill="#CBD5E1" font-size="30" font-family="Arial">AI optimization for paid traffic landing pages.</text>
+  <rect x="104" y="382" width="276" height="68" rx="12" fill="#22C55E"/>
+  <text x="144" y="425" fill="#0F172A" font-size="30" font-family="Arial" font-weight="700">Get Demo</text>
+  <text x="720" y="232" fill="#F8FAFC" font-size="44" font-family="Arial" font-weight="700">Built for Growth Teams</text>
+  <text x="720" y="284" fill="#CBD5E1" font-size="28" font-family="Arial">Scale messaging that matches each ad creative.</text>
+</svg>
