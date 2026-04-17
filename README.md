@@ -1,12 +1,17 @@
-# AI Landing Page Personalizer
+# Landing Page Personalizer
 
 A production-ready full-stack app that personalizes an existing landing page using ad-creative signal and CRO principles while preserving page structure.
+
+## Live URLs
+
+- Frontend (Vercel): https://ad-sync-personalizer-frontend.vercel.app/
+- Backend (Render): https://adsync-personalizer.onrender.com/
 
 ## Stack
 
 - Frontend: Next.js App Router + TailwindCSS
 - Backend: Node.js + Express
-- AI: OpenAI API, Gemini API, Groq API (provider fallback + heuristic safety fallback)
+- Content engines: OpenAI API, Gemini API, Groq API (provider fallback + heuristic safety fallback)
 - Scraping: Playwright
 - Parsing: Cheerio
 - Storage: In-memory
@@ -23,7 +28,7 @@ A production-ready full-stack app that personalizes an existing landing page usi
 - Original vs Personalized preview toggle
 - Text diff panel
 - Regenerate support
-- API endpoint tests with mocked scraper/AI mode
+- API endpoint tests with mocked scraper/content mode
 
 ## Project Structure
 
@@ -127,7 +132,7 @@ Output:
 - metadata about applied/skipped patches
 - fallback flag when no safe patch was applied
 
-## AI Guardrails
+## Content Guardrails
 
 Prompts and validators enforce:
 
@@ -140,7 +145,7 @@ Prompts and validators enforce:
 
 ## Edge-Case Safeguards
 
-- Schema validation for every major AI/scrape/generate step
+- Schema validation for every major analyze/scrape/generate step
 - Selector-based diff patching (no full-page regeneration)
 - Unsafe text rejection (`<` / `>` blocked in replacements)
 - Original page fallback if no valid patch applies

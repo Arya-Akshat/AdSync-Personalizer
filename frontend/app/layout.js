@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "AI Landing Page Personalizer",
+  title: "Landing Page Personalizer",
   description: "Personalize existing landing pages using ad-creative signal and CRO constraints."
 };
 

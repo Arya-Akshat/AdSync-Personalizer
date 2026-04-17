@@ -62,9 +62,9 @@ export default function HomePage() {
   return (
     <main className="mx-auto flex h-[100dvh] max-w-7xl flex-col overflow-hidden px-3 py-3 sm:px-4 sm:py-4">
       <header className="animate-riseIn shrink-0 rounded-2xl border border-[var(--line)] bg-white/90 px-4 py-3 shadow-[0_12px_28px_rgba(16,20,34,0.08)] sm:px-5 sm:py-4">
-        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-flame">AI CRO Studio</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-flame">CRO Studio</p>
         <h1 className="mt-1 font-display text-[clamp(1.75rem,3vw,2.6rem)] font-bold leading-tight text-ink">
-          AI Landing Page Personalizer
+          Landing Page Personalizer
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-slate-700 sm:text-[15px]">
           Personalize the same landing page based on ad signal. Structure stays intact, copy gets optimized.
