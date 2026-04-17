@@ -36,6 +36,14 @@ export const createApp = () => {
     })
   );
 
+  app.get("/", (_req, res) => {
+    res.json({
+      ok: true,
+      message: "Troopod backend is running",
+      health: "/health"
+    });
+  });
+
   app.get("/health", (_req, res) => {
     const visionProvider = config.geminiApiKey ? "gemini" : "fallback";
     const textProvider = config.groqApiKey ? "groq" : config.openAiApiKey ? "openai" : "fallback";
