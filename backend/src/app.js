@@ -18,13 +18,24 @@ import { saveRun, getLatestRun } from "./storage.js";
 
 const upload = multer({ limits: { fileSize: 5 * 1024 * 1024 } });
 
+const normalizeOrigin = (value) => String(value || "").trim().toLowerCase().replace(/\/+$/, "");
+
 export const createApp = () => {
   const app = express();
+  const allowedOrigins = new Set(config.allowedOrigins.map(normalizeOrigin).filter(Boolean));
 
   app.use(express.json({ limit: "2mb" }));
   app.use(
     cors({
-      origin: config.allowedOrigins,
+      origin: (origin, callback) => {
+        // Allow non-browser clients (curl, health checks) with no Origin header.
+        if (!origin) return callback(null, true);
+
+        const normalized = normalizeOrigin(origin);
+        if (allowedOrigins.has(normalized)) return callback(null, true);
+
+        return callback(new Error(`Origin not allowed by CORS: ${origin}`));
+      },
       credentials: false
     })
   );
