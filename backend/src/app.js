@@ -37,14 +37,15 @@ export const createApp = () => {
   );
 
   app.get("/health", (_req, res) => {
-    const provider = config.openAiApiKey
-      ? "openai"
-      : config.geminiApiKey
-        ? "gemini"
-        : config.groqApiKey
-          ? "groq"
-          : "fallback";
-    res.json({ ok: true, provider });
+    const visionProvider = config.geminiApiKey ? "gemini" : "fallback";
+    const textProvider = config.groqApiKey ? "groq" : config.openAiApiKey ? "openai" : "fallback";
+    res.json({
+      ok: true,
+      provider: `${visionProvider}+${textProvider}`,
+      visionProvider,
+      textProvider,
+      geminiCallsEnabled: Boolean(config.geminiApiKey)
+    });
   });
 
   app.post("/analyze-ad", upload.single("image"), async (req, res) => {

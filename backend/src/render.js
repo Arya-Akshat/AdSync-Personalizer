@@ -9,6 +9,14 @@ const isSafeText = (value) => {
   return value.trim().length > 0;
 };
 
+const roughlyMatchesExpected = (current, expected) => {
+  const left = normalizeWhitespace(current || "");
+  const right = normalizeWhitespace(expected || "");
+  if (!right) return true;
+  if (left === right) return true;
+  return left.includes(right) || right.includes(left);
+};
+
 export const applyModificationsToHtml = (originalHtml, modifications) => {
   const $ = cheerio.load(originalHtml);
   const applied = [];
@@ -36,6 +44,11 @@ export const applyModificationsToHtml = (originalHtml, modifications) => {
     const current = normalizeWhitespace(target.text() || "");
     if (!current) {
       skipped.push({ ...mod, reason: "Current target text is empty" });
+      continue;
+    }
+
+    if (!roughlyMatchesExpected(current, mod.originalText)) {
+      skipped.push({ ...mod, reason: "Target text no longer matches expected original text" });
       continue;
     }
 

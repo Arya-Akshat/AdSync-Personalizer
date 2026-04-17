@@ -20,5 +20,6 @@ export const config = {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean),
-  useMockAi: toBool(process.env.USE_MOCK_AI, false)
+  useMockAi: toBool(process.env.USE_MOCK_AI, false),
+  rewriteAllText: toBool(process.env.REWRITE_ALL_TEXT, true)
 };

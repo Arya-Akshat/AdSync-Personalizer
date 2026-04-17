@@ -4,44 +4,109 @@ import * as cheerio from "cheerio";
 import { clampText, normalizeWhitespace } from "./utils.js";
 import { config } from "./config.js";
 
-const MAX_SECTIONS = 40;
+const MAX_SECTIONS = 240;
 
-const roleForSelector = (selector) => {
-  if (selector.startsWith("h1") || selector.includes("hero")) return "hero";
-  if (selector.startsWith("h2") || selector.startsWith("h3")) return "heading";
-  if (selector.startsWith("a") || selector.startsWith("button")) return "cta";
-  if (selector.includes("feature") || selector.includes("benefit")) return "feature";
-  if (selector.startsWith("p")) return "body";
+const closeBrowserSafely = async (browser) => {
+  if (!browser) return;
+  await Promise.race([
+    browser.close(),
+    new Promise((resolve) => setTimeout(resolve, 5000))
+  ]).catch(() => null);
+};
+
+const roleForElement = (el) => {
+  const tag = el.tagName?.toLowerCase() || "div";
+  const id = (el.attribs?.id || "").toLowerCase();
+  const className = (el.attribs?.class || "").toLowerCase();
+  const marker = `${id} ${className}`;
+
+  if (tag === "h1" || marker.includes("hero")) return "hero";
+  if (["h2", "h3", "h4", "h5", "h6"].includes(tag)) return "heading";
+  if (tag === "button" || marker.includes("cta")) return "cta";
+  if (tag === "a" && /(cta|btn|button|shop|buy|start|trial|subscribe|get-?started|order)/i.test(marker)) {
+    return "cta";
+  }
+  if (marker.includes("feature") || marker.includes("benefit")) return "feature";
+  if (["p", "li", "span", "label", "small", "blockquote", "figcaption", "td", "th"].includes(tag)) return "body";
   return "unknown";
 };
 
-const buildSelector = (el, index) => {
-  const tag = el.tagName?.toLowerCase() || "div";
-  const id = el.attribs?.id ? `#${el.attribs.id}` : "";
-  const cls = el.attribs?.class
-    ? `.${el.attribs.class
-        .split(" ")
-        .filter(Boolean)
-        .slice(0, 2)
-        .join(".")}`
-    : "";
-  return `${tag}${id}${cls}` || `${tag}:nth-of-type(${index + 1})`;
+const cssEscape = (value) => {
+  return String(value || "").replace(/([^a-zA-Z0-9_-])/g, "\\$1");
 };
 
-export const extractSections = (html) => {
+const getNthOfType = ($, el) => {
+  const tag = el.tagName?.toLowerCase() || "div";
+  const siblings = $(el)
+    .parent()
+    .children(tag)
+    .toArray();
+  const index = siblings.findIndex((sibling) => sibling === el);
+  return index + 1;
+};
+
+const buildSelector = ($, el, index) => {
+  const parts = [];
+  let current = el;
+
+  while (current?.tagName) {
+    const tag = current.tagName.toLowerCase();
+    if (tag === "html") break;
+
+    const id = current.attribs?.id;
+    if (id) {
+      parts.unshift(`${tag}#${cssEscape(id)}`);
+      break;
+    }
+
+    const nth = getNthOfType($, current);
+    parts.unshift(`${tag}:nth-of-type(${nth})`);
+    current = current.parent;
+  }
+
+  if (parts.length === 0) {
+    const fallbackTag = el.tagName?.toLowerCase() || "div";
+    return `${fallbackTag}:nth-of-type(${index + 1})`;
+  }
+
+  return parts.join(" > ");
+};
+
+const extractSectionsInternal = (html, { relaxed = false } = {}) => {
   const $ = cheerio.load(html);
   const title = normalizeWhitespace($("title").first().text() || "Untitled Landing Page");
-  const candidates = $("h1, h2, h3, p, a.btn, a.button, a[role='button'], button, [data-testid*='hero'], [class*='hero'], [class*='cta']").toArray();
+  const roleCounter = new Map();
+  const candidates = relaxed
+    ? $(
+        "h1, h2, h3, h4, h5, h6, p, li, a, button, span, label, small, strong, em, blockquote, figcaption, td, th, [data-testid*='hero'], [class*='hero'], [class*='cta']"
+      ).toArray()
+    : $(
+        "h1, h2, h3, h4, h5, h6, p, li, a, button, span, label, small, strong, em, blockquote, figcaption, td, th, a[role='button'], a[class*='btn'], a[class*='button'], a[class*='cta'], [data-testid*='hero'], [class*='hero'], [class*='cta']"
+      ).toArray();
 
   const sections = candidates
     .map((el, index) => {
+      if (!config.rewriteAllText && !relaxed && $(el).closest("header, nav, footer").length > 0) return null;
+      if ($(el).closest("script, style, noscript, svg").length > 0) return null;
+
       const text = normalizeWhitespace($(el).text() || "");
-      if (!text || text.length < 3) return null;
-      const selector = buildSelector(el, index);
+      if (!text) return null;
+
+      const role = roleForElement(el);
+      const minBodyLength = config.rewriteAllText ? 2 : relaxed ? 8 : 20;
+      if (role === "cta" && text.length < (config.rewriteAllText ? 2 : 4)) return null;
+      if (role === "hero" && text.length < (config.rewriteAllText ? 3 : relaxed ? 6 : 8)) return null;
+      if (role === "heading" && text.length < (config.rewriteAllText ? 3 : relaxed ? 5 : 6)) return null;
+      if ((role === "body" || role === "unknown") && text.length < minBodyLength) return null;
+
+      const selector = buildSelector($, el, index);
+      const nextCount = (roleCounter.get(role) || 0) + 1;
+      roleCounter.set(role, nextCount);
+
       return {
-        id: `sec_${index + 1}`,
+        id: `${role}_${nextCount}`,
         selector,
-        role: roleForSelector(selector),
+        role,
         originalText: clampText(text, 320),
         currentText: clampText(text, 320)
       };
@@ -50,6 +115,10 @@ export const extractSections = (html) => {
     .slice(0, MAX_SECTIONS);
 
   return { title, sections };
+};
+
+export const extractSections = (html) => {
+  return extractSectionsInternal(html, { relaxed: false });
 };
 
 export const scrapePage = async (url) => {
@@ -127,9 +196,7 @@ export const scrapePage = async (url) => {
   } catch (error) {
     warnings.push(`Playwright scrape failed, switching to static fallback: ${error.message}`);
   } finally {
-    if (browser) {
-      await browser.close().catch(() => null);
-    }
+    await closeBrowserSafely(browser);
   }
 
   let finalHtml = browserHtml;
@@ -160,6 +227,15 @@ export const scrapePage = async (url) => {
 
   if (/login|sign in|signin|account/i.test(`${finalUrl} ${finalTitle}`)) {
     warnings.push("Page appears to be a login or account gate. Scraping may only capture the login screen.");
+  }
+
+  if (extracted.sections.length === 0 && finalHtml.trim()) {
+    const relaxed = extractSectionsInternal(finalHtml, { relaxed: true });
+    if (relaxed.sections.length > 0) {
+      extracted = relaxed;
+      finalTitle = relaxed.title || finalTitle;
+      warnings.push("Used relaxed extraction because strict section filtering returned no usable content.");
+    }
   }
 
   if (extracted.sections.length === 0) {
